@@ -1,14 +1,10 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-type LoginPageProps = {
-  onSwitchToRegister: () => void;
-};
-
-export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
+export function LoginPage() {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [correoInstitucional, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,8 +13,7 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
     setError('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
-
+    const { error } = await signIn(correoInstitucional, contrasena);
     if (error) {
       setError('Credenciales incorrectas. Por favor intenta de nuevo.');
     }
@@ -28,7 +23,6 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
-        {/* Panel izquierdo */}
         <div className="hidden md:flex flex-col items-center justify-center text-center space-y-6 p-8">
           <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-blue-600 rounded-3xl flex items-center justify-center shadow-lg transform -rotate-6 hover:rotate-0 transition-transform duration-300">
             <span className="text-6xl text-white">🌿</span>
@@ -58,61 +52,51 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
             </div>
           </div>
         </div>
-
-        {/* Panel derecho (formulario) */}
         <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Iniciar Sesión</h2>
             <p className="text-slate-600">Bienvenido de vuelta a SmartCampus</p>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-                Correo Electrónico
+              <label htmlFor="correoInstitucional" className="block text-sm font-medium text-slate-700 mb-2">
+                Correo Institucional
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">✉️</span>
                 <input
-                  id="email"
+                  id="correoInstitucional"
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={correoInstitucional}
+                  onChange={(e) => setCorreo(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                  placeholder="tu.correo@ucv.edu"
+                  placeholder="tu.correo@ucv.edu.ve"
                   required
                 />
               </div>
             </div>
-
-            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="contrasena" className="block text-sm font-medium text-slate-700 mb-2">
                 Contraseña
               </label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">🔒</span>
                 <input
-                  id="password"
+                  id="contrasena"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                   placeholder="••••••••"
                   required
                 />
               </div>
             </div>
-
-            {/* Error */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
-
-            {/* Botón */}
             <button
               type="submit"
               disabled={loading}
@@ -121,19 +105,6 @@ export function LoginPage({ onSwitchToRegister }: LoginPageProps) {
               {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </button>
           </form>
-
-          {/* Enlace registro */}
-          <div className="mt-6 text-center">
-            <p className="text-slate-600 text-sm">
-              ¿No tienes cuenta?{' '}
-              <button
-                onClick={onSwitchToRegister}
-                className="text-green-600 hover:text-green-700 font-semibold transition-colors"
-              >
-                Regístrate aquí
-              </button>
-            </p>
-          </div>
         </div>
       </div>
     </div>
