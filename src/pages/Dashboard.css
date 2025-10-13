@@ -1,0 +1,25 @@
+/* NO incluir @tailwind base/components/utilities aquí — sólo defs adicionales */
+
+/* Componentes y utilidades de la página Dashboard */
+@layer components {
+  .dashboard-hero {
+    @apply bg-gradient-to-r from-green-50 to-blue-50 p-8 rounded-lg;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .dashboard-card {
+    @apply card col-span-12 md:col-span-6 lg:col-span-4;
+  }
+}
+
+/* Utilidad local */
+@layer utilities {
+  .muted {
+    color: theme('colors.slate.500');
+  }
+}

@@ -1,0 +1,11 @@
+@layer components {
+  .landing-hero {
+    @apply flex flex-col items-start gap-4 py-16;
+    background: linear-gradient(90deg, rgba(34,197,94,0.06), rgba(59,130,246,0.06));
+  }
+
+  .cta-button {
+    @apply inline-flex items-center gap-2 px-5 py-3 rounded-lg text-white;
+    background: linear-gradient(90deg, rgb(var(--sc-primary)), rgb(var(--sc-accent)));
+  }
+}
