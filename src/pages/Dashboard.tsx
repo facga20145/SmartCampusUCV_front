@@ -1,5 +1,6 @@
 import "./Dashboard.css";
 import { useAuth } from "../components/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
@@ -20,7 +21,14 @@ export function Dashboard() {
           {user.hobbies && <div>Hobbies: <b>{user.hobbies}</b></div>}
           {user.foto && <div><img src={user.foto} alt="Foto" className="mx-auto w-24 h-24 rounded-full mt-3" /></div>}
         </div>
-        <button onClick={signOut} className="bg-red-100 text-red-600 rounded-xl px-5 py-2 font-bold hover:bg-red-200 transition">Cerrar sesión</button>
+        <div className="flex justify-center gap-4">
+          <Link to="/profile" className="bg-green-100 text-green-600 rounded-xl px-5 py-2 font-bold hover:bg-green-200 transition">
+            Ver Perfil Completo
+          </Link>
+          <button onClick={signOut} className="bg-red-100 text-red-600 rounded-xl px-5 py-2 font-bold hover:bg-red-200 transition">
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
   );

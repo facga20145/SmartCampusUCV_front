@@ -1,0 +1,127 @@
+.profile-page {
+  background-color: #f8fafc;
+}
+
+.profile-page h1 {
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.profile-page .avatar-container {
+  position: relative;
+  width: 10rem;
+  height: 10rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  background-color: #e2e8f0;
+  margin-bottom: 1rem;
+}
+
+.profile-page .avatar-upload {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: #22c55e;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.profile-page .avatar-upload:hover {
+  background-color: #16a34a;
+}
+
+.profile-page .form-section {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-page .form-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.profile-page .form-input:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #22c55e;
+}
+
+.profile-page .input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.profile-page .save-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: linear-gradient(to right, #22c55e, #3b82f6);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.profile-page .save-button:hover:not(:disabled) {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.profile-page .save-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-page .tag {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-page .tag-interest {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.profile-page .tag-hobby {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.profile-page .toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  color: white;
+  font-weight: 500;
+}
+
+.profile-page .toast-success {
+  background-color: #22c55e;
+}
+
+.profile-page .toast-error {
+  background-color: #ef4444;
+}
