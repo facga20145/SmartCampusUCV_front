@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
-
-const API_URL = import.meta.env.VITE_API_URL + "/auth";
+import { authService } from "../../services/api";
 
 type User = {
   id: number;
@@ -18,6 +17,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   signIn: (correoInstitucional: string, contrasena: string) => Promise<{ error: Error | null }>;
+  signUp: (correoInstitucional: string, contrasena: string, nombre: string, apellido: string) => Promise<{ error: Error | null }>;
   signOut: () => void;
 };
 
@@ -36,14 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  async function fetchProfile(token: string) {
+  async function fetchProfile(_token: string) {
     try {
-      const res = await fetch(`${API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Error al cargar perfil");
-      const data = await res.json();
-      setUser(data.user);
+      const userData = await authService.getProfile();
+      // Asumiendo que la API devuelve directamente los datos del usuario
+      setUser(userData);
     } catch (error) {
       console.error(error);
       localStorage.removeItem("token");
@@ -54,18 +51,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(correoInstitucional: string, contrasena: string) {
     try {
-      const res = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correoInstitucional, contrasena }),
-      });
-      if (!res.ok) throw new Error("Credenciales incorrectas");
-      const data = await res.json();
+      const data = await authService.login(correoInstitucional, contrasena);
       localStorage.setItem("token", data.accessToken);
       setUser(data.user);
       return { error: null };
     } catch (error) {
       console.error("Error en signIn:", error);
+      return { error: error as Error };
+    }
+  }
+  
+  async function signUp(correoInstitucional: string, contrasena: string, nombre: string, apellido: string) {
+    try {
+      const data = await authService.register({
+        correoInstitucional,
+        contrasena,
+        nombre,
+        apellido,
+        rol: "estudiante"
+      });
+      localStorage.setItem("token", data.accessToken);
+      setUser(data.user);
+      return { error: null };
+    } catch (error) {
+      console.error("Error en signUp:", error);
       return { error: error as Error };
     }
   }
@@ -76,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
