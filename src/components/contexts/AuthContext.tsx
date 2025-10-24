@@ -17,7 +17,14 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   signIn: (correoInstitucional: string, contrasena: string) => Promise<{ error: Error | null }>;
-  signUp: (correoInstitucional: string, contrasena: string, nombre: string, apellido: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    correoInstitucional: string,
+    contrasena: string,
+    nombre: string,
+    apellido: string,
+    intereses?: string,
+    hobbies?: string
+  ) => Promise<{ error: Error | null }>;
   signOut: () => void;
 };
 
@@ -52,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(correoInstitucional: string, contrasena: string) {
     try {
       const data = await authService.login(correoInstitucional, contrasena);
-      localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("token", data.accessToken || data.token);
       setUser(data.user);
       return { error: null };
     } catch (error) {
@@ -61,17 +68,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
   
-  async function signUp(correoInstitucional: string, contrasena: string, nombre: string, apellido: string) {
+  async function signUp(
+    correoInstitucional: string,
+    contrasena: string,
+    nombre: string,
+    apellido: string,
+    intereses?: string,
+    hobbies?: string
+  ) {
     try {
-      const data = await authService.register({
+      await authService.register({
         correoInstitucional,
         contrasena,
         nombre,
         apellido,
-        rol: "estudiante"
+        rol: 'estudiante',
+        intereses,
+        hobbies,
       });
-      localStorage.setItem("token", data.accessToken);
-      setUser(data.user);
+      // No guardamos token ni usuario en registro: el usuario iniciará sesión luego
       return { error: null };
     } catch (error) {
       console.error("Error en signUp:", error);

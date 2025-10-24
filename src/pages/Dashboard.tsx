@@ -25,6 +25,9 @@ export function Dashboard() {
           <Link to="/profile" className="bg-green-100 text-green-600 rounded-xl px-5 py-2 font-bold hover:bg-green-200 transition">
             Ver Perfil Completo
           </Link>
+          <Link to="/home" className="bg-green-100 text-green-600 rounded-xl px-5 py-2 font-bold hover:bg-green-200 transition">
+            Ver Home
+          </Link>
           <button onClick={signOut} className="bg-red-100 text-red-600 rounded-xl px-5 py-2 font-bold hover:bg-red-200 transition">
             Cerrar sesión
           </button>

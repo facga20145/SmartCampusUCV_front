@@ -30,15 +30,17 @@ export const authService = {
     return handleResponse(response);
   },
 
-  // Registrar nuevo usuario
+  // Registrar nuevo usuario (usa módulo de usuarios)
   async register(userData: {
     nombre: string;
     apellido: string;
     correoInstitucional: string;
     contrasena: string;
-    rol: string;
+    rol?: 'administrador' | 'organizador' | 'estudiante';
+    intereses?: string;
+    hobbies?: string;
   }) {
-    const response = await fetch(`${API_URL}/auth/register`, {
+    const response = await fetch(`${API_URL}/usuarios`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -48,14 +50,15 @@ export const authService = {
     return handleResponse(response);
   },
 
-  // Obtener perfil del usuario
+  // Perfil del usuario autenticado
   async getProfile() {
     const response = await fetch(`${API_URL}/auth/me`, {
+      method: 'GET',
       headers: {
+        'Content-Type': 'application/json',
         ...getAuthHeader(),
-        'Content-Type': 'application/json'
       } as HeadersInit,
     });
     return handleResponse(response);
-  },
+  }
 };
