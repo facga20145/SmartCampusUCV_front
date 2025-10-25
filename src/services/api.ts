@@ -1,11 +1,18 @@
 // Configuración base para las llamadas a la API
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://smartcampusucv.onrender.com';
 
 // Función auxiliar para manejar las respuestas de fetch
 async function handleResponse(response: Response) {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Error en la solicitud');
+    let message = errorData.message || 'Error en la solicitud';
+
+    // Mapeo específico por código de estado
+    if (response.status === 409) {
+      message = 'Cuenta ya existente. Por favor, usa otro correo o inicia sesión.';
+    }
+
+    throw new Error(message);
   }
   return response.json();
 }
