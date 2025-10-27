@@ -2,12 +2,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { authService } from "../../services/api";
 
+type UserRole = 'administrador' | 'organizador' | 'estudiante';
+
 type User = {
   id: number;
   nombre: string;
   apellido: string;
   correoInstitucional: string;
-  rol: string;
+  rol: UserRole;
   intereses?: string;
   hobbies?: string;
   foto?: string;
@@ -26,6 +28,7 @@ type AuthContextType = {
     hobbies?: string
   ) => Promise<{ error: Error | null }>;
   signOut: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetchProfile(token);
     } else {
@@ -45,12 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function fetchProfile(_token: string) {
     try {
-      const userData = await authService.getProfile();
-      // Asumiendo que la API devuelve directamente los datos del usuario
-      setUser(userData);
+      const response = await authService.getProfile();
+      // La API devuelve { user: {...} }
+      setUser(response.user || response);
     } catch (error) {
       console.error(error);
-      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
     } finally {
       setLoading(false);
     }
@@ -59,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function signIn(correoInstitucional: string, contrasena: string) {
     try {
       const data = await authService.login(correoInstitucional, contrasena);
-      localStorage.setItem("token", data.accessToken || data.token);
+      sessionStorage.setItem("token", data.accessToken || data.token);
       setUser(data.user);
       return { error: null };
     } catch (error) {
@@ -96,11 +99,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function signOut() {
     setUser(null);
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+  }
+
+  async function refreshUser() {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      await fetchProfile(token);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -112,4 +122,25 @@ export function useAuth() {
     throw new Error("useAuth debe usarse dentro de un AuthProvider");
   }
   return context;
+}
+
+// Helper hooks for role-based access
+export function useRole() {
+  const { user } = useAuth();
+  return user?.rol || null;
+}
+
+export function useIsAdmin() {
+  const role = useRole();
+  return role === 'administrador';
+}
+
+export function useIsOrganizer() {
+  const role = useRole();
+  return role === 'organizador';
+}
+
+export function useIsStudent() {
+  const role = useRole();
+  return role === 'estudiante';
 }

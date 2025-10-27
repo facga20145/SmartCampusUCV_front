@@ -4,6 +4,7 @@ import { useAuth } from '../components/contexts/AuthContext';
 import { Header } from '../components/layout/Header';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Bottomnav } from '../components/layout/Bottomnav';
+import { ProfileView } from '../components/profile/ProfileView';
 
 type Activity = {
   id: number;
@@ -208,7 +209,11 @@ function FilterPanel({
   );
 }
 
-export function HomePage() {
+type HomePageProps = {
+  canCreateActivities?: boolean;
+};
+
+export function HomePage({ canCreateActivities = false }: HomePageProps) {
   const { user } = useAuth();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [categories] = useState<Category[]>([
@@ -224,7 +229,7 @@ export function HomePage() {
   const [selectedDate, setSelectedDate] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create'>('home');
 
   useEffect(() => {
     loadData();
@@ -363,9 +368,10 @@ export function HomePage() {
     // Aquí iría la navegación a la página de detalle de la actividad
   }
 
-  function handleNavigate(page: 'home' | 'registrations' | 'recommendations' | 'profile') {
+  function handleNavigate(page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create') {
     setCurrentPage(page);
   }
+
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -384,79 +390,100 @@ export function HomePage() {
 
   return (
     <div className="bg-slate-50 min-h-screen pb-16 md:pb-0">
-      <Header showSearch onSearch={setSearchQuery} />
-      <Sidebar currentPage={currentPage} onNavigate={handleNavigate} />
-      <Bottomnav currentPage={currentPage} onNavigate={handleNavigate} />
+      <Header showSearch={currentPage === 'home'} onSearch={setSearchQuery} />
+      <Sidebar currentPage={currentPage} onNavigate={handleNavigate} canCreateActivities={canCreateActivities} />
+      <Bottomnav currentPage={currentPage} onNavigate={handleNavigate} canCreateActivities={canCreateActivities} />
 
       <main className="pt-[90px] md:pl-64 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="md:w-3/4">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">
-                {greeting()}, {user?.nombre || 'Usuario'}!
-              </h2>
-              <p className="text-slate-600">Descubre actividades sostenibles en tu campus</p>
+        {currentPage === 'profile' ? (
+          <ProfileView />
+        ) : currentPage === 'create' ? (
+          <div className="py-6">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Crear Actividad</h2>
+              <p className="text-slate-600">Funcionalidad en desarrollo</p>
+              <p className="text-sm text-slate-500 mt-2">Usa el prompt de Bolt para implementar</p>
             </div>
+          </div>
+        ) : currentPage === 'home' ? (
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="md:w-3/4">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {greeting()}, {user?.nombre || 'Usuario'}!
+                </h2>
+                <p className="text-slate-600">Descubre actividades sostenibles en tu campus</p>
+              </div>
 
-            <div className="md:hidden mb-4 flex justify-between items-center">
-              <h3 className="font-bold text-slate-900">Actividades</h3>
-              <button
-                onClick={() => setShowMobileFilters(true)}
-                className="flex items-center gap-1 text-sm text-slate-600 bg-white border border-slate-300 rounded-lg px-3 py-1.5"
-              >
-                <Filter className="w-4 h-4" />
-                Filtrar
-              </button>
-            </div>
-
-            {filteredActivities.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">No hay actividades</h3>
-                <p className="text-slate-600 mb-6">
-                  No se encontraron actividades con los filtros seleccionados.
-                </p>
+              <div className="md:hidden mb-4 flex justify-between items-center">
+                <h3 className="font-bold text-slate-900">Actividades</h3>
                 <button
-                  onClick={() => {
-                    setSelectedCategory('all');
-                    setSelectedDate('all');
-                    setSelectedLocation('all');
-                    setSearchQuery('');
-                  }}
-                  className="text-blue-600 font-medium hover:text-blue-700"
+                  onClick={() => setShowMobileFilters(true)}
+                  className="flex items-center gap-1 text-sm text-slate-600 bg-white border border-slate-300 rounded-lg px-3 py-1.5"
                 >
-                  Limpiar filtros
+                  <Filter className="w-4 h-4" />
+                  Filtrar
                 </button>
               </div>
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredActivities.map((activity) => (
-                  <ActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    onViewActivity={handleViewActivity}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
 
-          <div className="md:w-1/4">
-            <div className="hidden md:block">
-              <FilterPanel
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                selectedDate={selectedDate}
-                onSelectDate={setSelectedDate}
-                selectedLocation={selectedLocation}
-                onSelectLocation={setSelectedLocation}
-              />
+              {filteredActivities.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">No hay actividades</h3>
+                  <p className="text-slate-600 mb-6">
+                    No se encontraron actividades con los filtros seleccionados.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setSelectedDate('all');
+                      setSelectedLocation('all');
+                      setSearchQuery('');
+                    }}
+                    className="text-blue-600 font-medium hover:text-blue-700"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredActivities.map((activity) => (
+                    <ActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onViewActivity={handleViewActivity}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="md:w-1/4">
+              <div className="hidden md:block">
+                <FilterPanel
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  selectedLocation={selectedLocation}
+                  onSelectLocation={setSelectedLocation}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="py-6">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">
+                {currentPage === 'registrations' ? 'Mis Inscripciones' : 'Recomendaciones'}
+              </h2>
+              <p className="text-slate-600">Funcionalidad en desarrollo</p>
+            </div>
+          </div>
+        )}
       </main>
 
       {showMobileFilters && (

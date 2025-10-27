@@ -19,7 +19,7 @@ async function handleResponse(response: Response) {
 
 // Función para obtener el token de autenticación
 function getAuthHeader() {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -68,4 +68,116 @@ export const authService = {
     });
     return handleResponse(response);
   }
+};
+
+// Servicios de actividades
+export const actividadService = {
+  // Obtener todas las actividades
+  async getAll(filters?: {
+    categoria?: string;
+    fechaDesde?: string;
+    fechaHasta?: string;
+    lugar?: string;
+  }) {
+    const params = new URLSearchParams();
+    if (filters?.categoria) params.append('categoria', filters.categoria);
+    if (filters?.fechaDesde) params.append('fechaDesde', filters.fechaDesde);
+    if (filters?.fechaHasta) params.append('fechaHasta', filters.fechaHasta);
+    if (filters?.lugar) params.append('lugar', filters.lugar);
+
+    const response = await fetch(`${API_URL}/actividades?${params.toString()}`);
+    return handleResponse(response);
+  },
+
+  // Obtener actividad por ID
+  async getById(id: number) {
+    const response = await fetch(`${API_URL}/actividades/${id}`);
+    return handleResponse(response);
+  },
+
+  // Crear actividad (solo organizadores)
+  async create(actividadData: {
+    titulo: string;
+    descripcion: string;
+    categoria: string;
+    fecha: string;
+    hora: string;
+    lugar: string;
+    maxParticipantes?: number;
+    nivelSostenibilidad?: number;
+    organizadorId: number;
+  }) {
+    const response = await fetch(`${API_URL}/actividades`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify(actividadData),
+    });
+    return handleResponse(response);
+  },
+
+  // Actualizar actividad
+  async update(id: number, actividadData: any) {
+    const response = await fetch(`${API_URL}/actividades/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify(actividadData),
+    });
+    return handleResponse(response);
+  },
+
+  // Eliminar actividad
+  async delete(id: number) {
+    const response = await fetch(`${API_URL}/actividades/${id}`, {
+      method: 'DELETE',
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+};
+
+// Servicios de inscripciones
+export const inscripcionService = {
+  // Inscribirse en una actividad
+  async create(actividadId: number) {
+    const response = await fetch(`${API_URL}/inscripciones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({ actividadId }),
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener mis inscripciones
+  async getMyInscripciones() {
+    const response = await fetch(`${API_URL}/inscripciones`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Actualizar estado de inscripción
+  async update(id: number, estado: string) {
+    const response = await fetch(`${API_URL}/inscripciones/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({ estado }),
+    });
+    return handleResponse(response);
+  },
 };
