@@ -3,7 +3,7 @@ import { Heart, Smile, Camera } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export function ProfileView() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUser } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -100,8 +100,8 @@ export function ProfileView() {
         throw new Error(text || 'Error al actualizar el perfil');
       }
       onShowToast('Perfil actualizado con éxito', 'success');
-      // Recargar datos sin recargar página
-      window.location.reload();
+      // Refrescar datos del usuario en el contexto
+      await refreshUser();
     } catch (error) {
       onShowToast('Error al actualizar el perfil', 'error');
     } finally {

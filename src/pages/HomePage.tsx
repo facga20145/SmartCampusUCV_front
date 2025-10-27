@@ -5,6 +5,10 @@ import { Header } from '../components/layout/Header';
 import { Sidebar } from '../components/layout/Sidebar';
 import { Bottomnav } from '../components/layout/Bottomnav';
 import { ProfileView } from '../components/profile/ProfileView';
+import { CreateActivityView } from '../components/create/CreateActivityView';
+import { MyInscriptionsView } from '../components/inscripciones/MyInscriptionsView';
+import { ActivityDetailModal } from '../components/activities/ActivityDetailModal';
+import { actividadService } from '../services/api';
 
 type Activity = {
   id: number;
@@ -230,6 +234,8 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create'>('home');
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -243,67 +249,26 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
     try {
       setLoading(true);
       
-      // Simulando datos de actividades
-      const mockActivities: Activity[] = [
-        {
-          id: 1,
-          titulo: 'Limpieza de playa',
-          descripcion: 'Únete a la jornada de limpieza de playa para contribuir al cuidado del medio ambiente.',
-          categoria: 'voluntariado',
-          fecha: '2023-11-15',
-          hora: '09:00:00',
-          lugar: 'Playa Huanchaco',
-          organizadorId: 1,
-          organizador: {
-            nombre: 'Juan',
-            apellido: 'Pérez'
-          }
-        },
-        {
-          id: 2,
-          titulo: 'Taller de reciclaje creativo',
-          descripcion: 'Aprende a transformar residuos en objetos útiles y decorativos.',
-          categoria: 'artistica',
-          fecha: '2023-11-20',
-          hora: '15:00:00',
-          lugar: 'Aula 301',
-          organizadorId: 2,
-          organizador: {
-            nombre: 'María',
-            apellido: 'López'
-          }
-        },
-        {
-          id: 3,
-          titulo: 'Maratón ecológica',
-          descripcion: 'Participa en esta carrera para promover la conciencia ambiental.',
-          categoria: 'deportiva',
-          fecha: '2023-11-25',
-          hora: '07:00:00',
-          lugar: 'Campus principal',
-          organizadorId: 1,
-          organizador: {
-            nombre: 'Juan',
-            apellido: 'Pérez'
-          }
-        },
-        {
-          id: 4,
-          titulo: 'Concierto por el planeta',
-          descripcion: 'Disfruta de música en vivo mientras apoyamos causas ambientales.',
-          categoria: 'canto',
-          fecha: '2023-11-30',
-          hora: '18:00:00',
-          lugar: 'Auditorio principal',
-          organizadorId: 3,
-          organizador: {
-            nombre: 'Carlos',
-            apellido: 'Rodríguez'
-          }
-        }
-      ];
+      // Cargar actividades desde la API
+      const data = await actividadService.getAll();
+      
+      // Mapear los datos de la API al formato esperado
+      const activities: Activity[] = data.map((act: any) => ({
+        id: act.id,
+        titulo: act.titulo,
+        descripcion: act.descripcion || '',
+        categoria: act.categoria,
+        fecha: act.fecha,
+        hora: act.hora,
+        lugar: act.lugar,
+        organizadorId: act.organizadorId,
+        organizador: act.organizador ? {
+          nombre: act.organizador.nombre,
+          apellido: act.organizador.apellido
+        } : undefined
+      }));
 
-      setActivities(mockActivities);
+      setActivities(activities);
     } catch (error) {
       console.error('Error loading data:', error);
       // Si hay un error, mostrar actividades vacías
@@ -364,8 +329,20 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
   }
 
   function handleViewActivity(id: number) {
-    console.log(`Ver actividad ${id}`);
-    // Aquí iría la navegación a la página de detalle de la actividad
+    const activity = filteredActivities.find(a => a.id === id);
+    if (activity) {
+      setSelectedActivity(activity);
+      setIsModalOpen(true);
+    }
+  }
+
+  function handleCloseModal() {
+    setIsModalOpen(false);
+    setSelectedActivity(null);
+  }
+
+  function handleUpdateActivities() {
+    loadData(); // Recargar actividades cuando se actualizan
   }
 
   function handleNavigate(page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create') {
@@ -398,13 +375,7 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
         {currentPage === 'profile' ? (
           <ProfileView />
         ) : currentPage === 'create' ? (
-          <div className="py-6">
-            <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Crear Actividad</h2>
-              <p className="text-slate-600">Funcionalidad en desarrollo</p>
-              <p className="text-sm text-slate-500 mt-2">Usa el prompt de Bolt para implementar</p>
-            </div>
-          </div>
+          <CreateActivityView />
         ) : currentPage === 'home' ? (
           <div className="flex flex-col md:flex-row gap-6">
             <div className="md:w-3/4">
@@ -474,17 +445,25 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
               </div>
             </div>
           </div>
+        ) : currentPage === 'registrations' ? (
+          <MyInscriptionsView />
         ) : (
           <div className="py-6">
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">
-                {currentPage === 'registrations' ? 'Mis Inscripciones' : 'Recomendaciones'}
-              </h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-4">Recomendaciones</h2>
               <p className="text-slate-600">Funcionalidad en desarrollo</p>
             </div>
           </div>
         )}
       </main>
+
+      {/* Modal de detalles de actividad */}
+      <ActivityDetailModal
+        activity={selectedActivity}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onUpdate={handleUpdateActivities}
+      />
 
       {showMobileFilters && (
         <FilterPanel
