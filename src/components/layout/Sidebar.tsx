@@ -1,9 +1,9 @@
-import { Home, Calendar, Lightbulb, User, LogOut, Trophy, Award } from 'lucide-react';
+import { Home, Calendar, Lightbulb, User, LogOut, Trophy, Award, Bot } from 'lucide-react';
 import { useAuth, useIsAdmin } from '../contexts/AuthContext';
 
 type SidebarProps = {
-  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos';
-  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos') => void;
+  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos' | 'chatbot';
+  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos' | 'chatbot') => void;
   canCreateActivities?: boolean;
 };
 
@@ -22,8 +22,8 @@ export function Sidebar({ currentPage, onNavigate, canCreateActivities = false }
     : [
         { id: 'home' as const, icon: Home, label: 'Inicio' },
         { id: 'registrations' as const, icon: Calendar, label: 'Mis Inscripciones' },
+        { id: 'chatbot' as const, icon: Bot, label: 'Asistente IA' },
         { id: 'ranking' as const, icon: Trophy, label: 'Ranking' },
-        { id: 'recommendations' as const, icon: Lightbulb, label: 'Recomendaciones' },
         { id: 'profile' as const, icon: User, label: 'Mi Perfil' },
       ];
 

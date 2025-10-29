@@ -264,7 +264,6 @@ export const participacionService = {
     return handleResponse(response);
   },
 };
-
 // ==================== RECONOCIMIENTOS ====================
 export const reconocimientoService = {
   // Obtener mis reconocimientos
@@ -306,6 +305,50 @@ export const reconocimientoService = {
         ...getAuthHeader(),
       } as HeadersInit,
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+};
+
+// ==================== CHATBOT ====================
+export const chatbotService = {
+  // Enviar mensaje al chatbot
+  async sendMessage(usuarioId: number, mensaje: string) {
+    const response = await fetch(`${API_URL}/chatbot/mensaje`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({ usuarioId, mensaje }),
+    });
+    return handleResponse(response);
+  },
+};
+
+// ==================== RECOMENDACIONES IA ====================
+export const recomendacionIaService = {
+  // Obtener recomendaciones personalizadas
+  async getPersonalizadas(userQuery?: string) {
+    const response = await fetch(`${API_URL}/recomendaciones-ia/personalizadas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({ user_query: userQuery || null }),
+    });
+    return handleResponse(response);
+  },
+
+  // Inscribirse en una actividad desde recomendación
+  async inscribir(actividadId: number) {
+    const response = await fetch(`${API_URL}/recomendaciones-ia/inscribir/${actividadId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
     });
     return handleResponse(response);
   },

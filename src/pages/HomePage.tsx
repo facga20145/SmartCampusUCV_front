@@ -10,6 +10,7 @@ import { MyInscriptionsView } from '../components/inscripciones/MyInscriptionsVi
 import { RankingView } from '../components/ranking/RankingView';
 import { ActivityDetailModal } from '../components/activities/ActivityDetailModal';
 import { ManageReconocimientosView } from '../components/reconocimientos/ManageReconocimientosView';
+import { ChatbotView } from '../components/chatbot/ChatbotView';
 import { actividadService } from '../services/api';
 import { useIsAdmin } from '../components/contexts/AuthContext';
 
@@ -236,7 +237,7 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
   const [selectedDate, setSelectedDate] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos' | 'chatbot'>('home');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const isAdmin = useIsAdmin();
@@ -349,7 +350,7 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
     loadData(); // Recargar actividades cuando se actualizan
   }
 
-  function handleNavigate(page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create') {
+  function handleNavigate(page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos' | 'chatbot') {
     setCurrentPage(page);
   }
 
@@ -453,6 +454,8 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
           <MyInscriptionsView />
         ) : currentPage === 'ranking' ? (
           <RankingView />
+        ) : currentPage === 'chatbot' && !canCreateActivities ? (
+          <ChatbotView />
         ) : currentPage === 'reconocimientos' && isAdmin ? (
           <ManageReconocimientosView />
         ) : (
