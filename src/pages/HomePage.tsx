@@ -7,8 +7,11 @@ import { Bottomnav } from '../components/layout/Bottomnav';
 import { ProfileView } from '../components/profile/ProfileView';
 import { CreateActivityView } from '../components/create/CreateActivityView';
 import { MyInscriptionsView } from '../components/inscripciones/MyInscriptionsView';
+import { RankingView } from '../components/ranking/RankingView';
 import { ActivityDetailModal } from '../components/activities/ActivityDetailModal';
+import { ManageReconocimientosView } from '../components/reconocimientos/ManageReconocimientosView';
 import { actividadService } from '../services/api';
+import { useIsAdmin } from '../components/contexts/AuthContext';
 
 type Activity = {
   id: number;
@@ -233,9 +236,10 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
   const [selectedDate, setSelectedDate] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos'>('home');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const isAdmin = useIsAdmin();
 
   useEffect(() => {
     loadData();
@@ -447,6 +451,10 @@ export function HomePage({ canCreateActivities = false }: HomePageProps) {
           </div>
         ) : currentPage === 'registrations' ? (
           <MyInscriptionsView />
+        ) : currentPage === 'ranking' ? (
+          <RankingView />
+        ) : currentPage === 'reconocimientos' && isAdmin ? (
+          <ManageReconocimientosView />
         ) : (
           <div className="py-6">
             <div className="bg-white rounded-2xl shadow-lg p-8 text-center">

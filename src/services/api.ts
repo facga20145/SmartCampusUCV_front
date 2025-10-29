@@ -67,7 +67,17 @@ export const authService = {
       } as HeadersInit,
     });
     return handleResponse(response);
-  }
+  },
+
+  // Obtener todos los usuarios (admin)
+  async getAllUsuarios() {
+    const response = await fetch(`${API_URL}/usuarios`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
 };
 
 // Servicios de actividades
@@ -177,6 +187,125 @@ export const inscripcionService = {
         ...getAuthHeader(),
       } as HeadersInit,
       body: JSON.stringify({ estado }),
+    });
+    return handleResponse(response);
+  },
+};
+
+// Servicios de participación
+export const participacionService = {
+  // Crear participación (marcar asistencia)
+  async create(actividadId: number, asistencia: boolean, feedback?: string, puntos?: number) {
+    const response = await fetch(`${API_URL}/participaciones`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({
+        actividadId,
+        asistencia,
+        feedback: feedback || null,
+        puntos: puntos || 0,
+      }),
+    });
+    return handleResponse(response);
+  },
+
+  // Actualizar participación (actualizar asistencia/feedback)
+  async update(id: number, asistencia?: boolean, feedback?: string, puntos?: number) {
+    const response = await fetch(`${API_URL}/participaciones/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify({
+        asistencia,
+        feedback,
+        puntos,
+      }),
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener ranking global
+  async getRankingGlobal(limit?: number) {
+    const params = limit ? `?limit=${limit}` : '';
+    const response = await fetch(`${API_URL}/participaciones/ranking-global${params}`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener ranking por actividad
+  async getRankingActividad(actividadId: number, limit?: number) {
+    const params = new URLSearchParams();
+    params.append('actividadId', actividadId.toString());
+    if (limit) params.append('limit', limit.toString());
+    
+    const response = await fetch(`${API_URL}/participaciones/ranking?${params.toString()}`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener mis participaciones
+  async getMyParticipaciones() {
+    const response = await fetch(`${API_URL}/participaciones`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+};
+
+// ==================== RECONOCIMIENTOS ====================
+export const reconocimientoService = {
+  // Obtener mis reconocimientos
+  async getMyReconocimientos() {
+    const response = await fetch(`${API_URL}/reconocimientos/mis-reconocimientos`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener reconocimientos de un usuario
+  async getByUsuario(usuarioId: number) {
+    const response = await fetch(`${API_URL}/reconocimientos/usuario/${usuarioId}`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Obtener todos los reconocimientos (admin)
+  async getAll() {
+    const response = await fetch(`${API_URL}/reconocimientos`, {
+      headers: {
+        ...getAuthHeader(),
+      } as HeadersInit,
+    });
+    return handleResponse(response);
+  },
+
+  // Crear reconocimiento (admin)
+  async create(data: { usuarioId: number; tipo?: string; descripcion?: string }) {
+    const response = await fetch(`${API_URL}/reconocimientos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      } as HeadersInit,
+      body: JSON.stringify(data),
     });
     return handleResponse(response);
   },

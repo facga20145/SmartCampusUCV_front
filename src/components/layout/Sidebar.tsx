@@ -1,25 +1,28 @@
-import { Home, Calendar, Lightbulb, User, LogOut } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Home, Calendar, Lightbulb, User, LogOut, Trophy, Award } from 'lucide-react';
+import { useAuth, useIsAdmin } from '../contexts/AuthContext';
 
 type SidebarProps = {
-  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create';
-  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create') => void;
+  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos';
+  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos') => void;
   canCreateActivities?: boolean;
 };
 
 export function Sidebar({ currentPage, onNavigate, canCreateActivities = false }: SidebarProps) {
   const { signOut, user } = useAuth();
+  const isAdmin = useIsAdmin();
 
   // Nav items según si puede crear actividades (organizador/admin) o es estudiante
   const navItems = canCreateActivities
     ? [
         { id: 'home' as const, icon: Home, label: 'Inicio' },
         { id: 'create' as const, icon: Calendar, label: 'Crear Actividad' },
+        ...(isAdmin ? [{ id: 'reconocimientos' as const, icon: Award, label: 'Reconocimientos' }] : []),
         { id: 'profile' as const, icon: User, label: 'Mi Perfil' },
       ]
     : [
         { id: 'home' as const, icon: Home, label: 'Inicio' },
         { id: 'registrations' as const, icon: Calendar, label: 'Mis Inscripciones' },
+        { id: 'ranking' as const, icon: Trophy, label: 'Ranking' },
         { id: 'recommendations' as const, icon: Lightbulb, label: 'Recomendaciones' },
         { id: 'profile' as const, icon: User, label: 'Mi Perfil' },
       ];

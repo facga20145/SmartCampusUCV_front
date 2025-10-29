@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Heart, Smile, Camera } from 'lucide-react';
+import { Heart, Smile, Camera, Trophy, Award, Star } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { participacionService, reconocimientoService } from '../../services/api';
 
 export function ProfileView() {
   const { user, signOut, refreshUser } = useAuth();
@@ -15,6 +16,8 @@ export function ProfileView() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [totalPuntos, setTotalPuntos] = useState<number | null>(null);
+  const [reconocimientos, setReconocimientos] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -23,8 +26,57 @@ export function ProfileView() {
       setAvatarUrl(user.foto || '');
       setInterests(user.intereses ? user.intereses.split(',').map(i => i.trim()) : []);
       setHobbies(user.hobbies ? user.hobbies.split(',').map(h => h.trim()) : []);
+      loadTotalPuntos();
+      loadReconocimientos();
     }
   }, [user]);
+
+  async function loadTotalPuntos() {
+    try {
+      const ranking = await participacionService.getRankingGlobal(1000); // Obtener muchos para encontrar al usuario
+      const userPoints = ranking.find((r: any) => r.usuario?.id === user?.id);
+      setTotalPuntos(userPoints?.puntos || 0);
+    } catch (error) {
+      console.error('Error loading puntos:', error);
+      setTotalPuntos(0);
+    }
+  }
+
+  async function loadReconocimientos() {
+    try {
+      const data = await reconocimientoService.getMyReconocimientos();
+      setReconocimientos(data);
+    } catch (error) {
+      console.error('Error loading reconocimientos:', error);
+      setReconocimientos([]);
+    }
+  }
+
+  function getBadgeIcon(tipo: string | null) {
+    switch (tipo?.toLowerCase()) {
+      case 'badge':
+      case 'medalla':
+        return <Award className="w-6 h-6" />;
+      case 'diploma':
+      case 'certificado':
+        return <Star className="w-6 h-6" />;
+      default:
+        return <Trophy className="w-6 h-6" />;
+    }
+  }
+
+  function getBadgeColor(tipo: string | null) {
+    switch (tipo?.toLowerCase()) {
+      case 'badge':
+      case 'medalla':
+        return 'from-yellow-400 to-orange-500';
+      case 'diploma':
+      case 'certificado':
+        return 'from-blue-400 to-purple-500';
+      default:
+        return 'from-green-400 to-blue-500';
+    }
+  }
 
   const onShowToast = (message: string, type: 'success' | 'error') => {
     setToastMessage(message);
@@ -157,6 +209,56 @@ export function ProfileView() {
             </h2>
             <p className="text-slate-500">{user?.correoInstitucional}</p>
             <p className="mt-2 text-sm text-slate-600">{user?.rol}</p>
+            {/* Puntos acumulados */}
+            <div className="mt-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl border border-yellow-200">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <p className="text-xs text-slate-600">Puntos totales</p>
+                  <p className="text-xl font-bold text-slate-900">
+                    {totalPuntos !== null ? totalPuntos : '...'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Badges/Reconocimientos */}
+            {reconocimientos.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                  <Award className="w-5 h-5 text-yellow-600" />
+                  Mis Reconocimientos
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {reconocimientos.map((reconocimiento) => (
+                    <div
+                      key={reconocimiento.id}
+                      className={`p-4 bg-gradient-to-br ${getBadgeColor(reconocimiento.tipo)} rounded-xl text-white shadow-md transform hover:scale-105 transition-transform`}
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="mb-2">
+                          {getBadgeIcon(reconocimiento.tipo)}
+                        </div>
+                        <p className="text-xs font-medium mb-1">
+                          {reconocimiento.tipo || 'Reconocimiento'}
+                        </p>
+                        {reconocimiento.descripcion && (
+                          <p className="text-xs opacity-90 line-clamp-2">
+                            {reconocimiento.descripcion}
+                          </p>
+                        )}
+                        <p className="text-xs mt-2 opacity-75">
+                          {new Date(reconocimiento.fecha).toLocaleDateString('es-ES', {
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

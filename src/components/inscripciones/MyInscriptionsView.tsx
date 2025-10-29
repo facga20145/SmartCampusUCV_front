@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Calendar, MapPin, Users, CheckCircle, XCircle, Clock, UserCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { inscripcionService } from '../../services/api';
+import { inscripcionService, participacionService } from '../../services/api';
 import { ActivityDetailModal } from '../activities/ActivityDetailModal';
+import { ConfirmAsistenciaModal } from '../participacion/ConfirmAsistenciaModal';
 
 type Inscripcion = {
   id: number;
@@ -29,9 +30,16 @@ export function MyInscriptionsView() {
   const [loading, setLoading] = useState(true);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activityForAsistencia, setActivityForAsistencia] = useState<any>(null);
+  const [isAsistenciaModalOpen, setIsAsistenciaModalOpen] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [participaciones, setParticipaciones] = useState<any[]>([]);
 
   useEffect(() => {
     loadInscripciones();
+    loadParticipaciones();
   }, []);
 
   async function loadInscripciones() {
@@ -45,6 +53,20 @@ export function MyInscriptionsView() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadParticipaciones() {
+    try {
+      const data = await participacionService.getMyParticipaciones();
+      setParticipaciones(data);
+    } catch (error) {
+      console.error('Error loading participaciones:', error);
+      setParticipaciones([]);
+    }
+  }
+
+  function hasParticipacion(actividadId: number): boolean {
+    return participaciones.some((p: any) => p.actividadId === actividadId);
   }
 
   function getEstadoIcon(estado: string) {
@@ -89,6 +111,40 @@ export function MyInscriptionsView() {
   function handleViewActivity(activity: any) {
     setSelectedActivity(activity);
     setIsModalOpen(true);
+  }
+
+  function handleConfirmAsistencia(e: React.MouseEvent, activity: any) {
+    e.stopPropagation(); // Evitar que abra el modal de detalles
+    setActivityForAsistencia(activity);
+    setIsAsistenciaModalOpen(true);
+  }
+
+  function isActivityPast(activity: any): boolean {
+    const activityDate = new Date(activity.fecha);
+    const activityTime = new Date(activity.hora);
+    // Combinar fecha y hora
+    const activityDateTime = new Date(
+      activityDate.getFullYear(),
+      activityDate.getMonth(),
+      activityDate.getDate(),
+      activityTime.getHours(),
+      activityTime.getMinutes()
+    );
+    const now = new Date();
+    // Considerar que la actividad ya pasó si ya pasó la fecha/hora
+    return activityDateTime <= now;
+  }
+
+  function onShowToast(message: string, type: 'success' | 'error') {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
+  }
+
+  function handleAsistenciaSuccess() {
+    loadInscripciones(); // Recargar inscripciones
+    loadParticipaciones(); // Recargar participaciones para ocultar el botón
   }
 
   if (loading) {
@@ -166,10 +222,32 @@ export function MyInscriptionsView() {
                   )}
                 </div>
 
-                {/* Botón ver detalles */}
-                <button className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition">
-                  Ver Detalles
-                </button>
+                {/* Botones */}
+                <div className="mt-4 space-y-2">
+                  {isActivityPast(inscripcion.actividad) && 
+                   inscripcion.estado === 'confirmada' && 
+                   !hasParticipacion(inscripcion.actividad.id) && (
+                    <button
+                      onClick={(e) => handleConfirmAsistencia(e, inscripcion.actividad)}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center gap-2"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      Confirmar Asistencia
+                    </button>
+                  )}
+                  {hasParticipacion(inscripcion.actividad.id) && (
+                    <div className="w-full px-4 py-2 bg-green-100 border-2 border-green-300 text-green-800 rounded-lg font-semibold flex items-center justify-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Asistencia Confirmada
+                    </div>
+                  )}
+                  <button
+                    onClick={() => handleViewActivity(inscripcion.actividad)}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg font-semibold hover:opacity-90 transition"
+                  >
+                    Ver Detalles
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -183,6 +261,31 @@ export function MyInscriptionsView() {
         onClose={() => setIsModalOpen(false)}
         onUpdate={loadInscripciones}
       />
+
+      {/* Modal de confirmar asistencia */}
+      {activityForAsistencia && (
+        <ConfirmAsistenciaModal
+          activity={activityForAsistencia}
+          isOpen={isAsistenciaModalOpen}
+          onClose={() => {
+            setIsAsistenciaModalOpen(false);
+            setActivityForAsistencia(null);
+          }}
+          onSuccess={handleAsistenciaSuccess}
+          onShowToast={onShowToast}
+        />
+      )}
+
+      {/* Toast */}
+      {showToast && (
+        <div
+          className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+            toastType === 'success' ? 'bg-green-500' : 'bg-red-500'
+          } text-white`}
+        >
+          {toastMessage}
+        </div>
+      )}
     </>
   );
 }

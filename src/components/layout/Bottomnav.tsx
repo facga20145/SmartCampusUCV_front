@@ -1,24 +1,27 @@
-import { Home, Calendar, Lightbulb, User } from 'lucide-react';
-
-import { Plus } from 'lucide-react';
+import { Home, Calendar, Lightbulb, User, Plus, Trophy, Award } from 'lucide-react';
+import { useIsAdmin } from '../contexts/AuthContext';
 
 type BottomnavProps = {
-  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create';
-  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create') => void;
+  currentPage: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos';
+  onNavigate: (page: 'home' | 'registrations' | 'recommendations' | 'profile' | 'create' | 'ranking' | 'reconocimientos') => void;
   canCreateActivities?: boolean;
 };
 
 export function Bottomnav({ currentPage, onNavigate, canCreateActivities = false }: BottomnavProps) {
+  const isAdmin = useIsAdmin();
+  
   // Nav items según si puede crear actividades
   const navItems = canCreateActivities
     ? [
         { id: 'home' as const, icon: Home, label: 'Inicio' },
         { id: 'create' as const, icon: Plus, label: 'Crear' },
+        ...(isAdmin ? [{ id: 'reconocimientos' as const, icon: Award, label: 'Badges' }] : []),
         { id: 'profile' as const, icon: User, label: 'Perfil' },
       ]
     : [
         { id: 'home' as const, icon: Home, label: 'Inicio' },
         { id: 'registrations' as const, icon: Calendar, label: 'Inscripciones' },
+        { id: 'ranking' as const, icon: Trophy, label: 'Ranking' },
         { id: 'recommendations' as const, icon: Lightbulb, label: 'Recomendaciones' },
         { id: 'profile' as const, icon: User, label: 'Perfil' },
       ];

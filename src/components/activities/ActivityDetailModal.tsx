@@ -157,6 +157,26 @@ export function ActivityDetailModal({ activity, isOpen, onClose, onUpdate }: Act
     }
   }
 
+  async function handleConfirmParticipant(inscripcionId: number) {
+    try {
+      await inscripcionService.update(inscripcionId, 'confirmada');
+      onShowToast('Inscripción confirmada exitosamente', 'success');
+      loadParticipantes(); // Recargar lista de participantes
+    } catch (error) {
+      onShowToast('Error al confirmar inscripción', 'error');
+    }
+  }
+
+  async function handleCancelParticipant(inscripcionId: number) {
+    try {
+      await inscripcionService.update(inscripcionId, 'cancelada');
+      onShowToast('Inscripción cancelada exitosamente', 'success');
+      loadParticipantes(); // Recargar lista de participantes
+    } catch (error) {
+      onShowToast('Error al cancelar inscripción', 'error');
+    }
+  }
+
   async function handleUpdate() {
     if (!activity) return;
 
@@ -421,21 +441,43 @@ export function ActivityDetailModal({ activity, isOpen, onClose, onUpdate }: Act
                 ) : participantes.length > 0 ? (
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {participantes.map((participante) => (
-                      <div key={participante.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            {participante.usuario.nombre} {participante.usuario.apellido}
-                          </p>
-                          <p className="text-xs text-slate-600">{participante.usuario.correoInstitucional}</p>
+                      participante.usuario ? (
+                        <div key={participante.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-900">
+                              {participante.usuario.nombre} {participante.usuario.apellido}
+                            </p>
+                            <p className="text-xs text-slate-600">{participante.usuario.correoInstitucional}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              participante.estado === 'confirmada' ? 'bg-green-100 text-green-800' : 
+                              participante.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {participante.estado}
+                            </span>
+                            {participante.estado === 'pendiente' && (
+                              <button
+                                onClick={() => handleConfirmParticipant(participante.id)}
+                                className="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded-lg transition font-medium"
+                                title="Confirmar inscripción"
+                              >
+                                Confirmar
+                              </button>
+                            )}
+                            {participante.estado === 'confirmada' && (
+                              <button
+                                onClick={() => handleCancelParticipant(participante.id)}
+                                className="px-3 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded-lg transition font-medium"
+                                title="Cancelar inscripción"
+                              >
+                                Cancelar
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          participante.estado === 'confirmada' ? 'bg-green-100 text-green-800' : 
-                          participante.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-red-100 text-red-800'
-                        }`}>
-                          {participante.estado}
-                        </span>
-                      </div>
+                      ) : null
                     ))}
                   </div>
                 ) : (
