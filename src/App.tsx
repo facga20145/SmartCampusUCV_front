@@ -1,12 +1,57 @@
 import "./App.css";
-import { useAuth } from "./components/contexts/AuthContext";
+import { useAuth, useRole } from "./components/contexts/AuthContext";
 import { LoginPage } from "./components/auth/LoginPage";
-import { Dashboard } from "./pages/Dashboard";
+import RegisterPage from "./pages/RegisterPage";
+import { HomePage } from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
+// Componente para rutear según rol
+function RoleBasedRouter() {
+  const { user } = useAuth();
+  const role = useRole();
+
+  if (!user) {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="*" element={<LoginPage />} />
+        </Routes>
+      </Router>
+    );
+  }
+
+  if (role === 'estudiante') {
+    return (
+      <Router>
+        <Routes>
+          <Route path="/home" element={<HomePage canCreateActivities={false} />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </Router>
+    );
+  }
+
+  // Rutas para organizadores y administradores (pueden crear actividades)
+  const canCreateActivities = role === 'organizador' || role === 'administrador';
+  
+  return (
+    <Router>
+      <Routes>
+        <Route path="/home" element={<HomePage canCreateActivities={canCreateActivities} />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
+    </Router>
+  );
+
+}
+
 function App() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -16,21 +61,7 @@ function App() {
     );
   }
 
-  // Si no hay sesión, mostrar el login
-  if (!user) {
-    return <LoginPage/>;
-  }
-
-  // Si hay usuario logueado, mostrar las rutas protegidas
-  return (
-    <Router>
-      <Routes>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </Router>
-  );
+  return <RoleBasedRouter />;
 }
 
 export default App;

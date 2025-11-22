@@ -1,14 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { authService } from "../../services/api";
 
-const API_URL = import.meta.env.VITE_API_URL + "/auth";
+type UserRole = 'administrador' | 'organizador' | 'estudiante';
 
 type User = {
   id: number;
   nombre: string;
   apellido: string;
   correoInstitucional: string;
-  rol: string;
+  rol: UserRole;
   intereses?: string;
   hobbies?: string;
   foto?: string;
@@ -18,7 +19,16 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   signIn: (correoInstitucional: string, contrasena: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    correoInstitucional: string,
+    contrasena: string,
+    nombre: string,
+    apellido: string,
+    intereses?: string,
+    hobbies?: string
+  ) => Promise<{ error: Error | null }>;
   signOut: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetchProfile(token);
     } else {
@@ -36,17 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  async function fetchProfile(token: string) {
+  async function fetchProfile(_token: string) {
     try {
-      const res = await fetch(`${API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Error al cargar perfil");
-      const data = await res.json();
-      setUser(data.user);
+      const response = await authService.getProfile();
+      // La API devuelve { user: {...} }
+      setUser(response.user || response);
     } catch (error) {
       console.error(error);
-      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
     } finally {
       setLoading(false);
     }
@@ -54,14 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function signIn(correoInstitucional: string, contrasena: string) {
     try {
-      const res = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correoInstitucional, contrasena }),
-      });
-      if (!res.ok) throw new Error("Credenciales incorrectas");
-      const data = await res.json();
-      localStorage.setItem("token", data.accessToken);
+      const data = await authService.login(correoInstitucional, contrasena);
+      sessionStorage.setItem("token", data.accessToken || data.token);
       setUser(data.user);
       return { error: null };
     } catch (error) {
@@ -69,14 +70,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error as Error };
     }
   }
+  
+  async function signUp(
+    correoInstitucional: string,
+    contrasena: string,
+    nombre: string,
+    apellido: string,
+    intereses?: string,
+    hobbies?: string
+  ) {
+    try {
+      await authService.register({
+        correoInstitucional,
+        contrasena,
+        nombre,
+        apellido,
+        rol: 'estudiante',
+        intereses,
+        hobbies,
+      });
+      // No guardamos token ni usuario en registro: el usuario iniciará sesión luego
+      return { error: null };
+    } catch (error) {
+      console.error("Error en signUp:", error);
+      return { error: error as Error };
+    }
+  }
 
   function signOut() {
     setUser(null);
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+  }
+
+  async function refreshUser() {
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      await fetchProfile(token);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -88,4 +122,25 @@ export function useAuth() {
     throw new Error("useAuth debe usarse dentro de un AuthProvider");
   }
   return context;
+}
+
+// Helper hooks for role-based access
+export function useRole() {
+  const { user } = useAuth();
+  return user?.rol || null;
+}
+
+export function useIsAdmin() {
+  const role = useRole();
+  return role === 'administrador';
+}
+
+export function useIsOrganizer() {
+  const role = useRole();
+  return role === 'organizador';
+}
+
+export function useIsStudent() {
+  const role = useRole();
+  return role === 'estudiante';
 }

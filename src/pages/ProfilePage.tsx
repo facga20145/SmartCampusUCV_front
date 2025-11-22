@@ -84,7 +84,7 @@ export function ProfilePage() {
     setSaving(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) throw new Error('Token no encontrado');
       const API_URL = import.meta.env.VITE_API_URL;
       if (!user || !user.id) throw new Error('Usuario no encontrado');
@@ -130,7 +130,7 @@ export function ProfilePage() {
     setChangingPassword(true);
     
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       if (!token) throw new Error('Token no encontrado');
       const API_URL = import.meta.env.VITE_API_URL;
       if (!user || !user.id) throw new Error('Usuario no encontrado');
@@ -487,8 +487,8 @@ export function ProfilePage() {
           </div>
 
           <div className="flex justify-between items-center mt-6">
-            <Link to="/dashboard" className="px-6 py-3 bg-blue-100 text-blue-600 rounded-xl font-semibold hover:bg-blue-200 transition-colors">
-              Volver al Dashboard
+            <Link to="/home" className="px-6 py-3 bg-blue-100 text-blue-600 rounded-xl font-semibold hover:bg-blue-200 transition-colors">
+              Volver al Inicio
             </Link>
             <button 
               onClick={signOut} 
