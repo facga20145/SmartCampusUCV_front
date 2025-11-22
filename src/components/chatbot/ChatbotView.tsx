@@ -1,7 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, Calendar, MapPin, Leaf } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { chatbotService } from '../../services/api';
+
+type Activity = {
+  id: number;
+  titulo: string;
+  categoria: string;
+  fecha: string;
+  lugar: string;
+  nivel_sostenibilidad: number;
+  razon?: string;
+  puntuacion?: number;
+};
 
 type Message = {
   id: number;
@@ -9,6 +20,7 @@ type Message = {
   respuestaBot: string;
   fecha: string;
   isUser: boolean;
+  recomendaciones?: Activity[];
 };
 
 export function ChatbotView() {
@@ -38,17 +50,17 @@ export function ChatbotView() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  async function handleSendMessage() {
-    if (!inputMessage.trim() || !user || loading) return;
+  async function handleSendMessage(text?: string) {
+    const messageToSend = text || inputMessage;
+    if (!messageToSend.trim() || !user || loading) return;
 
-    const userMessage = inputMessage.trim();
-    setInputMessage('');
+    if (!text) setInputMessage('');
     setLoading(true);
 
     // Agregar mensaje del usuario
     const userMsg: Message = {
       id: Date.now(),
-      mensajeUsuario: userMessage,
+      mensajeUsuario: messageToSend,
       respuestaBot: '',
       fecha: new Date().toISOString(),
       isUser: true,
@@ -57,15 +69,16 @@ export function ChatbotView() {
     setMessages((prev) => [...prev, userMsg]);
 
     try {
-      const response = await chatbotService.sendMessage(user.id, userMessage);
+      const response = await chatbotService.sendMessage(user.id, messageToSend);
 
       // Agregar respuesta del bot
       const botMsg: Message = {
         id: response.id || Date.now() + 1,
-        mensajeUsuario: userMessage,
+        mensajeUsuario: messageToSend,
         respuestaBot: response.respuestaBot || 'Lo siento, no pude procesar tu mensaje.',
         fecha: response.fecha || new Date().toISOString(),
         isUser: false,
+        recomendaciones: response.recomendaciones || [],
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -73,8 +86,50 @@ export function ChatbotView() {
       console.error('Error enviando mensaje:', error);
       const errorMsg: Message = {
         id: Date.now() + 1,
-        mensajeUsuario: userMessage,
+        mensajeUsuario: messageToSend,
         respuestaBot: '⚠️ Lo siento, hubo un error al procesar tu mensaje. Por favor, inténtalo de nuevo.',
+        fecha: new Date().toISOString(),
+        isUser: false,
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleEnrollment(activityId: number, activityTitle: string) {
+    // Enviar comando oculto pero mostrar mensaje amigable
+    const command = `CMD_INSCRIBIR_ID: ${activityId}`;
+
+    // Simular mensaje del usuario en la UI
+    const userMsg: Message = {
+      id: Date.now(),
+      mensajeUsuario: `Quiero inscribirme en "${activityTitle}"`,
+      respuestaBot: '',
+      fecha: new Date().toISOString(),
+      isUser: true,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+    setLoading(true);
+
+    try {
+      const response = await chatbotService.sendMessage(user!.id, command);
+
+      const botMsg: Message = {
+        id: response.id || Date.now() + 1,
+        mensajeUsuario: command,
+        respuestaBot: response.respuestaBot,
+        fecha: response.fecha || new Date().toISOString(),
+        isUser: false,
+      };
+
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (error) {
+      console.error('Error enrollment:', error);
+      const errorMsg: Message = {
+        id: Date.now() + 1,
+        mensajeUsuario: command,
+        respuestaBot: '⚠️ Error al procesar la inscripción.',
         fecha: new Date().toISOString(),
         isUser: false,
       };
@@ -99,12 +154,7 @@ export function ChatbotView() {
     'Actividades de medio ambiente',
   ];
 
-  function handleQuickSuggestion(suggestion: string) {
-    setInputMessage(suggestion);
-  }
-
   function formatMessage(text: string): string {
-    // Convertir saltos de línea y formato básico
     return text
       .replace(/\n/g, '<br>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -133,36 +183,78 @@ export function ChatbotView() {
         {/* Chat Container */}
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-slate-50 to-white">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-slate-50 to-white">
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}
-              >
-                {!message.isUser && (
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-5 h-5 text-white" />
+              <div key={message.id} className="space-y-4">
+                {/* Mensaje principal */}
+                <div className={`flex gap-3 ${message.isUser ? 'justify-end' : 'justify-start'}`}>
+                  {!message.isUser && (
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.isUser
+                        ? 'bg-gradient-to-r from-blue-500 to-green-600 text-white'
+                        : 'bg-white border border-slate-200 text-slate-900 shadow-sm'
+                      }`}
+                  >
+                    {message.isUser ? (
+                      <p className="text-sm font-medium whitespace-pre-wrap">{message.mensajeUsuario}</p>
+                    ) : (
+                      <div
+                        className="text-sm whitespace-pre-wrap"
+                        dangerouslySetInnerHTML={{ __html: formatMessage(message.respuestaBot) }}
+                      />
+                    )}
                   </div>
-                )}
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                    message.isUser
-                      ? 'bg-gradient-to-r from-blue-500 to-green-600 text-white'
-                      : 'bg-white border border-slate-200 text-slate-900 shadow-sm'
-                  }`}
-                >
-                  {message.isUser ? (
-                    <p className="text-sm font-medium whitespace-pre-wrap">{message.mensajeUsuario}</p>
-                  ) : (
-                    <div
-                      className="text-sm whitespace-pre-wrap"
-                      dangerouslySetInnerHTML={{ __html: formatMessage(message.respuestaBot) }}
-                    />
+                  {message.isUser && (
+                    <div className="w-8 h-8 bg-gradient-to-br from-slate-400 to-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
                   )}
                 </div>
-                {message.isUser && (
-                  <div className="w-8 h-8 bg-gradient-to-br from-slate-400 to-slate-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-white" />
+
+                {/* Tarjetas de Recomendación */}
+                {!message.isUser && message.recomendaciones && message.recomendaciones.length > 0 && (
+                  <div className="pl-11 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {message.recomendaciones.map((rec) => (
+                      <div key={rec.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded-full uppercase">
+                            {rec.categoria}
+                          </span>
+                          {rec.puntuacion && (
+                            <span className="flex items-center text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
+                              ⭐ {(rec.puntuacion * 100).toFixed(0)}%
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-slate-900 mb-2">{rec.titulo}</h3>
+
+                        <div className="space-y-2 text-sm text-slate-600 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            <span>{new Date(rec.fecha).toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-slate-400" />
+                            <span>{rec.lugar}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Leaf className="w-4 h-4 text-green-500" />
+                            <span>Sostenibilidad: {rec.nivel_sostenibilidad}/10</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleEnrollment(rec.id, rec.titulo)}
+                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                          Inscribirse
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -194,7 +286,7 @@ export function ChatbotView() {
                 {quickSuggestions.map((suggestion, index) => (
                   <button
                     key={index}
-                    onClick={() => handleQuickSuggestion(suggestion)}
+                    onClick={() => handleSendMessage(suggestion)}
                     className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-full text-slate-700 hover:bg-slate-100 hover:border-blue-400 transition-colors"
                   >
                     {suggestion}
@@ -218,7 +310,7 @@ export function ChatbotView() {
                 disabled={loading}
               />
               <button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!inputMessage.trim() || loading}
                 className="px-6 py-3 bg-gradient-to-r from-blue-500 to-green-600 text-white rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
